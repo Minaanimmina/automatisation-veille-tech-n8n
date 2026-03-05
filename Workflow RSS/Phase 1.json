@@ -1,0 +1,394 @@
+{
+  "name": "Veille Discord",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        0
+      ],
+      "id": "4b0d39a4-3c2f-47ed-9d15-811398666693",
+      "name": "9am Trigger"
+    },
+    {
+      "parameters": {
+        "url": "https://medium.com/feed/tag/data-engineering",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        224,
+        240
+      ],
+      "id": "6693c9dd-14bb-4957-af1b-55950e912c6f",
+      "name": "Medium - Data engineering"
+    },
+    {
+      "parameters": {
+        "url": "https://towardsdatascience.com/feed",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        224,
+        464
+      ],
+      "id": "0d04d995-80db-4e47-9f1e-68ab939ac77c",
+      "name": "Towards Data Science"
+    },
+    {
+      "parameters": {
+        "url": "https://medium.com/feed/tag/python",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "0f430500-7a85-4b31-9015-5210c6bf47f5",
+      "name": "Medium - Python"
+    },
+    {
+      "parameters": {
+        "url": "https://medium.com/feed/tag/large-language-models",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        224,
+        -224
+      ],
+      "id": "605fbe2f-05ff-4c9c-bc34-242a848ea696",
+      "name": "Medium - LLM"
+    },
+    {
+      "parameters": {
+        "url": "https://www.wired.com/feed/tag/ai/latest/rss",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        224,
+        -448
+      ],
+      "id": "c5e81c4a-c7eb-4ff7-bf1f-b6e17c7d8627",
+      "name": "Wired - AI"
+    },
+    {
+      "parameters": {
+        "numberInputs": 5
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        608,
+        -48
+      ],
+      "id": "0c98bd15-e438-4459-b8f8-ee16dcb67653",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "65ddb375-52f7-4023-bbde-d7f3762364a4",
+              "leftValue": "={{ $json.pubDate }}",
+              "rightValue": "={{ DateTime.now().minus({ hours: 24 }) }}",
+              "operator": {
+                "type": "dateTime",
+                "operation": "afterOrEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        864,
+        0
+      ],
+      "id": "3a7fe71e-2f25-439d-affe-be62bd23556a",
+      "name": "Filter"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "64ba343c-737f-471d-880b-f63ee1a8877a",
+              "name": "titre",
+              "value": "={{ $json.title }}",
+              "type": "string"
+            },
+            {
+              "id": "5fbafab9-c256-49fd-842b-f85db8d53b3e",
+              "name": "url",
+              "value": "={{ $json.link }}",
+              "type": "string"
+            },
+            {
+              "id": "8dc54b85-fd86-4cd0-875e-ec4fda16a598",
+              "name": "Date de publication",
+              "value": "={{ $json.pubDate }}",
+              "type": "string"
+            },
+            {
+              "id": "9ce71514-5199-440e-ac01-9584c5558e20",
+              "name": "Résumé",
+              "value": "={{ $json.contentSnippet }}",
+              "type": "string"
+            },
+            {
+              "id": "7bb22de3-4682-400a-8366-f1deccc7266c",
+              "name": "Auteur-e",
+              "value": "={{ $json.creator }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1120,
+        0
+      ],
+      "id": "838a7a3e-1c9b-40be-8236-a83473f43975",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "DISCORD_WEBHOOK_URL",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.payload }}",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 2000
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1568,
+        0
+      ],
+      "id": "7efa9ddc-10db-46bc-8a23-a2f7cb561697",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "return {\n  json: {\n    payload: JSON.stringify({\n      embeds: [{\n        title: $input.item.json.titre,\n        url: $input.item.json.url,\n        description: $input.item.json.Résumé,\n        color: 5814783,\n        footer: {\n          text: $input.item.json['Auteur-e'] + ' • ' + $input.item.json['Date de publication']\n        }\n      }]\n    })\n  }\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1312,
+        0
+      ],
+      "id": "c94d8353-727e-41cd-b3dc-d9960e1afeb3",
+      "name": "Code in JavaScript"
+    }
+  ],
+  "pinData": {
+    "9am Trigger": [
+      {
+        "json": {
+          "timestamp": "2026-03-05T05:24:21.496-05:00",
+          "Readable date": "March 5th 2026, 5:24:21 am",
+          "Readable time": "5:24:21 am",
+          "Day of week": "Thursday",
+          "Year": "2026",
+          "Month": "March",
+          "Day of month": "05",
+          "Hour": "05",
+          "Minute": "24",
+          "Second": "21",
+          "Timezone": "Europe/Paris (UTC+01:00)"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "9am Trigger": {
+      "main": [
+        [
+          {
+            "node": "Towards Data Science",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Medium - Data engineering",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Medium - Python",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Medium - LLM",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Wired - AI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Medium - Python": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Wired - AI": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Medium - LLM": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Medium - Data engineering": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "Towards Data Science": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 4
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        []
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "f439cfd4-3969-4a6d-9501-95c4b9168581",
+  "meta": {
+    "instanceId": "8047f41c662044a08fdb2ad5808e59842ae874c860b91e8b28ac020035c1fb0e"
+  },
+  "id": "v4evp6ISnGpayCmw",
+  "tags": []
+}
