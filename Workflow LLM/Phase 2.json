@@ -30,7 +30,7 @@
         "url": "https://api.tavily.com/search",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "{\n  \"api_key\": \"xxxxxxxxxxxxxxxxxxxxxxxx\",\n  \"query\": \"intelligence artificielle big data bibliothèques France 2026\",\n  \"max_results\": 5,\n  \"days\": 7\n}",
+        "jsonBody": "{\n  \"api_key\": \"TAVILY_API_KEY\",\n  \"query\": \"intelligence artificielle big data bibliothèques France 2026\",\n  \"max_results\": 5,\n  \"days\": 7\n}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
@@ -51,7 +51,7 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "Bearer xxxxxxxxxxxxxxxxxxxxxxxx"
+              "value": "Bearer GROQ_API_KEY"
             }
           ]
         },
@@ -102,7 +102,7 @@
         "url": "https://api.tavily.com/search",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "{\n  \"api_key\": \"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\",\n  \"query\": \"big data données bibliothèques SIGB France\",\n  \"max_results\": 5,\n  \"days\": 7\n}",
+        "jsonBody": "{\n  \"api_key\": \"TAVILY_API_KEY\",\n  \"query\": \"big data données bibliothèques SIGB France\",\n  \"max_results\": 5,\n  \"days\": 7\n}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
@@ -120,7 +120,7 @@
         "url": "https://api.tavily.com/search",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "{\n  \"api_key\": \"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\",\n  \"query\": \"IA bibliothèques publiques France actualités\",\n  \"max_results\": 5,\n  \"days\": 7\n}",
+        "jsonBody": "{\n  \"api_key\": \"TAVILY_API_KEY\",\n  \"query\": \"IA bibliothèques publiques France actualités\",\n  \"max_results\": 5,\n  \"days\": 7\n}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
