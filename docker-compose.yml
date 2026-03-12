@@ -1,13 +1,23 @@
 services:
   n8n:
-    image: docker.n8n.io/n8nio/n8n
+    image: docker.n8n.io/n8nio/n8n:latest
+    container_name: n8n
+    restart: unless-stopped
     ports:
       - "5678:5678"
     environment:
-      - N8N_EDITOR_BASE_URL=http://localhost:5678
-      - WEBHOOK_URL=http://127.0.0.1:5678
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD}
+      - NODE_FUNCTION_ALLOW_BUILTIN=fs,path
     volumes:
       - n8n_data:/home/node/.n8n
+      - ${OBSIDIAN_PATH}:/data/obsidian
+    networks:
+      - n8n-network
 
 volumes:
   n8n_data:
+
+networks:
+  n8n-network:
