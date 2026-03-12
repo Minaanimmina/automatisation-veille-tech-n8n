@@ -1,0 +1,377 @@
+{
+  "name": "Veille IA/Big data bibli Obsidian",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "daysInterval": 7,
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        0
+      ],
+      "id": "45084486-a058-492c-bb8a-2932608debcb",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.tavily.com/search",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n     \"api_key\": \"TAVILY_API_KEY\",\n     \"query\": \"IA chatbot assistant virtuel SIGB bibliothèque France déploiement 2025 2026\",\n     \"max_results\": 8,\n     \"days\": 7,\n     \"search_depth\": \"advanced\"\n   }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        224,
+        -256
+      ],
+      "id": "ba987b0e-68fd-4861-a373-f89628cfc7b2",
+      "name": "Tavily - Projets IA"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.tavily.com/search",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n     \"api_key\": \"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\",\n     \"query\": \"analytics données usage bibliothèques tableau de bord indicateurs France\",\n     \"max_results\": 8,\n     \"days\": 7,\n     \"search_depth\": \"advanced\"\n   }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        224,
+        96
+      ],
+      "id": "79eb9f99-0803-46b3-b249-754480e48ec4",
+      "name": "Tavily - Analytics/Data"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.tavily.com/search",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n     \"api_key\": \"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\",\n     \"query\": \"machine learning prédiction recommandation bibliothèques recherche universitaire\",\n     \"max_results\": 8,\n     \"days\": 7,\n     \"search_depth\": \"advanced\"\n   }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        224,
+        -96
+      ],
+      "id": "9d96b702-7746-427a-a577-f905d05e47fe",
+      "name": "Tavily - Recherche/ML"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.tavily.com/search",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "   {\n     \"api_key\": \"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\",\n     \"query\": \"open source AI libraries digital transformation public sector France Europe\",\n     \"max_results\": 8,\n     \"days\": 7,\n     \"search_depth\": \"advanced\"\n   }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        224,
+        304
+      ],
+      "id": "caa6a2e3-3831-4a90-8312-3a33e77ae4f8",
+      "name": "Tavily - Veille Internationale"
+    },
+    {
+      "parameters": {
+        "numberInputs": 4
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        560,
+        -48
+      ],
+      "id": "e4c9ea75-724c-4c12-b386-a7841a56f73c",
+      "name": "Merge Recherches"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Déduplication intelligente par URL + similarité de titre\nconst allResults = $input.all();\n\nconst articles = allResults.flatMap(item => item.json.results || []);\n\n// Fonction de similarité simple (Levenshtein distance normalisée)\nfunction similarity(s1, s2) {\n  const longer = s1.length > s2.length ? s1 : s2;\n  const shorter = s1.length > s2.length ? s2 : s1;\n  if (longer.length === 0) return 1.0;\n  const editDistance = levenshtein(longer, shorter);\n  return (longer.length - editDistance) / longer.length;\n}\n\nfunction levenshtein(s1, s2) {\n  const costs = [];\n  for (let i = 0; i <= s1.length; i++) {\n    let lastValue = i;\n    for (let j = 0; j <= s2.length; j++) {\n      if (i === 0) {\n        costs[j] = j;\n      } else if (j > 0) {\n        let newValue = costs[j - 1];\n        if (s1.charAt(i - 1) !== s2.charAt(j - 1)) {\n          newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;\n        }\n        costs[j - 1] = lastValue;\n        lastValue = newValue;\n      }\n    }\n    if (i > 0) costs[s2.length] = lastValue;\n  }\n  return costs[s2.length];\n}\n\n// Déduplication\nconst seen = new Map();\nconst deduplicated = [];\n\nfor (const article of articles) {\n  const url = article.url;\n  const title = (article.title || '').toLowerCase();\n  \n  // Check exact URL match\n  if (seen.has(url)) continue;\n  \n  // Check similar titles (>85% similarity)\n  let isDuplicate = false;\n  for (const [seenUrl, seenTitle] of seen.entries()) {\n    if (similarity(title, seenTitle) > 0.85) {\n      isDuplicate = true;\n      break;\n    }\n  }\n  \n  if (!isDuplicate) {\n    seen.set(url, title);\n    deduplicated.push(article);\n  }\n}\n\nconsole.log(`Articles avant déduplication: ${articles.length}`);\nconsole.log(`Articles après déduplication: ${deduplicated.length}`);\n\nreturn [{\n  json: {\n    articles: deduplicated,\n    stats: {\n      total_avant: articles.length,\n      total_apres: deduplicated.length,\n      doublons_elimines: articles.length - deduplicated.length\n    }\n  }\n}]"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        768,
+        -16
+      ],
+      "id": "19a172e1-d1de-46b9-b26b-590e01469712",
+      "name": "Déduplication"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\n\nreturn [{\n  json: {\n    model: \"llama-3.3-70b-versatile\",\n    max_tokens: 4000,\n    temperature: 0.3,\n    messages: [\n      {\n        role: \"system\",\n        content: \"Tu es un expert en veille stratégique pour les bibliothèques. Tu analyses des articles avec rigueur et retournes UNIQUEMENT du JSON valide, sans texte superflu.\"\n      },\n      {\n        role: \"user\",\n        content: data.prompt\n      }\n    ]\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1184,
+        -16
+      ],
+      "id": "442d3cae-0cab-436f-86be-7098b53b5210",
+      "name": "Build Groq Request"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer GROQ_API_KEY"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1392,
+        -16
+      ],
+      "id": "d64ae214-73d8-4ce6-9a11-dfbe3b3de653",
+      "name": "Groq Analysis"
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst content = response.choices[0].message.content;\n\n// Extraire le JSON (gérer les cas avec/sans backticks)\nlet jsonText = content.trim();\nif (jsonText.startsWith('```json')) {\n  jsonText = jsonText.replace(/```json\\n?/g, '').replace(/```\\n?$/g, '').trim();\n} else if (jsonText.startsWith('```')) {\n  jsonText = jsonText.replace(/```\\n?/g, '').trim();\n}\n\n// Parser le JSON\nlet parsed;\ntry {\n  parsed = JSON.parse(jsonText);\n} catch (e) {\n  // Fallback : chercher le JSON entre accolades\n  const match = jsonText.match(/\\{[\\s\\S]*\\}/);\n  if (!match) {\n    throw new Error(`Impossible de parser le JSON. Erreur: ${e.message}\\n\\nContenu reçu:\\n${content.substring(0, 500)}`);\n  }\n  parsed = JSON.parse(match[0]);\n}\n\nif (!parsed.articles || !Array.isArray(parsed.articles)) {\n  throw new Error('Format JSON invalide : propriété \"articles\" manquante ou invalide');\n}\n\nconsole.log(`Articles analysés par le LLM : ${parsed.articles.length}`);\nconsole.log('Répartition :', JSON.stringify(parsed.meta?.repartition_categories || {}));\n\nreturn [{\n  json: {\n    articles: parsed.articles,\n    meta: parsed.meta || {},\n    date_veille: new Date().toISOString().split('T')[0]\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1600,
+        -16
+      ],
+      "id": "909f9352-47bc-455d-9380-3d82ba77081d",
+      "name": "Parse & Validate JSON"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\nconst articles = data.articles || [];\n\n// Formater les articles pour le LLM\nconst articlesText = articles\n  .map((r, idx) => {\n    const content = (r.content || r.snippet || 'N/A').substring(0, 300);\n    return `[${idx + 1}] Titre: ${r.title}\\nURL: ${r.url}\\nContenu: ${content}...\\nSource: ${r.source || 'N/A'}\\n`;\n  })\n  .join('\\n---\\n\\n');\n\nconst prompt = `Tu es un expert consultant en transformation numérique des bibliothèques publiques françaises, spécialisé en IA et Big Data.\n\n## CONTEXTE DE LA VEILLE\nClient : éditeur de logiciels pour bibliothèques (SIGB, OPAC, EPN)\nPublic cible : développeur IA/data analyst\nObjectif : Projet de BI dashboard + intégration IA (text-to-SQL, prédictions ML) pour une plateforme transverse de pilotage et d’analyse des bibliothèques à partir des données des trois logiciels édités\n\n## ARTICLES TROUVÉS (${articles.length} après déduplication)\n\n${articlesText}\n\n## TÂCHES D'ANALYSE\n\n1. **FILTRAGE** : Élimine les articles :\n   - Hors-sujet (tourisme, IA générale sans lien bibliothèques)\n   - Trop génériques ou marketing sans substance\n   - Paywalled sans résumé exploitable\n\n2. **SCORING** (0-10) selon :\n   - Pertinence pour bibliothèques françaises (40%) : projet français > européen > international\n   - Caractère actionnable/opérationnel (30%) : retour d'expérience concret > concept théorique\n   - Nouveauté/originalité (30%) : innovation technique ou organisationnelle\n   - **Seuil minimum : 6/10**\n\n3. **CATÉGORISATION** :\n   - PROJET : Déploiement/mise en production d'IA dans une bibliothèque\n   - ANALYTICS : Tableaux de bord, KPI, exploitation de données d'usage\n   - RECHERCHE : Études, publications scientifiques sur IA/ML en bibliothèques\n   - OUTIL : Nouveaux logiciels, frameworks, APIs utilisables en bibliothèque\n   - TENDANCE : Analyse de marché, prospective, changements réglementaires\n\n4. **RÉSUMÉ CONTEXTUALISÉ** pour chaque article (3-4 phrases) :\n   - Phrase 1 : QUOI exactement (technologie, projet, étude)\n   - Phrase 2 : QUI et OÙ (institution, pays, échelle)\n   - Phrase 3 : RÉSULTATS/ENSEIGNEMENTS clés\n   - Phrase 4 : PERTINENCE pour AFI-SA ou bibliothèques françaises (transférabilité, inspiration)\n\n5. **MOTS-CLÉS** : 3-5 tags précis (ex: \"chatbot SIGB\", \"prédiction rotation collections\", \"Matomo analytics\")\n\n## FORMAT DE RÉPONSE\n\nRetourne UNIQUEMENT un JSON valide, sans texte avant/après, sans backticks markdown :\n\n{\n  \"articles\": [\n    {\n      \"titre\": \"Titre exact de l'article\",\n      \"url\": \"URL complète\",\n      \"categorie\": \"PROJET\",\n      \"score\": 8.5,\n      \"resume_contextualise\": \"Résumé en 3-4 phrases avec QUOI/QUI/OÙ/RÉSULTATS/PERTINENCE AFI-SA\",\n      \"mots_cles\": [\"tag1\", \"tag2\", \"tag3\"],\n      \"source\": \"Nom de la source (journal, site, institution)\",\n      \"date_approx\": \"2026-03\"\n    }\n  ],\n  \"meta\": {\n    \"total_analyses\": ${articles.length},\n    \"total_retenus\": \"nombre d'articles avec score ≥ 6\",\n    \"repartition_categories\": {\"PROJET\": 2, \"ANALYTICS\": 1}\n  }\n}\n\nNe garde QUE les articles avec score ≥ 6/10. Vise 5-8 articles maximum.`;\n\nreturn [{\n  json: {\n    prompt: prompt,\n    stats_input: data.stats\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        976,
+        -16
+      ],
+      "id": "7ce651fb-0e22-46c7-9586-e3fa0e341227",
+      "name": "Prépare le Prompt LLM"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\nconst articles = data.articles || [];\nconst meta = data.meta || {};\nconst dateVeille = data.date_veille;\n\n// Générer le nom de fichier : YYYY-MM-DD-veille-ia-bibliotheques.md\nconst filename = `${dateVeille}-veille-ia-bibliotheques.md`;\n\n// Trier les articles par score décroissant\nconst sorted = [...articles].sort((a, b) => (b.score || 0) - (a.score || 0));\n\n// Générer le frontmatter YAML pour Obsidian\nconst frontmatter = `---\ntitle: \"Veille IA & Big Data - Bibliothèques\"\ndate: ${dateVeille}\ntype: veille\ntags:\n  - veille/ia\n  - veille/big-data\n  - bibliothèques\n  - automatique\ntotal_articles: ${sorted.length}\ncategories: ${JSON.stringify(meta.repartition_categories || {})}\n---\n\n`;\n\n// Générer le contenu markdown\nlet markdown = frontmatter;\n\nmarkdown += `# Veille IA & Big Data — Bibliothèques\\n\\n`;\nmarkdown += `**Semaine du ${dateVeille}** | ${sorted.length} articles sélectionnés\\n\\n`;\n\nif (meta.total_analyses) {\n  markdown += `> **Analyse** : ${meta.total_analyses} articles scannés → ${meta.total_retenus || sorted.length} retenus (score ≥ 6/10)\\n\\n`;\n}\n\n// Table des matières par catégorie\nconst categories = {};\nsorted.forEach(a => {\n  const cat = a.categorie || 'AUTRE';\n  if (!categories[cat]) categories[cat] = [];\n  categories[cat].push(a);\n});\n\nmarkdown += `## 📑 Par catégorie\\n\\n`;\nfor (const [cat, items] of Object.entries(categories)) {\n  const emoji = {\n    'PROJET': '🚀',\n    'ANALYTICS': '📈',\n    'RECHERCHE': '🔬',\n    'OUTIL': '🛠️',\n    'TENDANCE': '📊'\n  }[cat] || '📌';\n  markdown += `- ${emoji} **${cat}** : ${items.length} article${items.length > 1 ? 's' : ''}\\n`;\n}\n\nmarkdown += `\\n---\\n\\n`;\n\n// Articles détaillés par catégorie\nfor (const [cat, items] of Object.entries(categories)) {\n  const emoji = {\n    'PROJET': '🚀',\n    'ANALYTICS': '📈',\n    'RECHERCHE': '🔬',\n    'OUTIL': '🛠️',\n    'TENDANCE': '📊'\n  }[cat] || '📌';\n  \n  markdown += `## ${emoji} ${cat}\\n\\n`;\n  \n  items.forEach((article, idx) => {\n    markdown += `### ${idx + 1}. ${article.titre}\\n\\n`;\n    markdown += `**Score** : ${article.score}/10 | **Source** : ${article.source || 'N/A'}${article.date_approx ? ` | **Date** : ${article.date_approx}` : ''}\\n\\n`;\n    markdown += `🔗 [Lien vers l'article](${article.url})\\n\\n`;\n    markdown += `${article.resume_contextualise}\\n\\n`;\n    \n    if (article.mots_cles && article.mots_cles.length > 0) {\n      markdown += `**Tags** : ${article.mots_cles.map(t => `\\`${t}\\``).join(', ')}\\n\\n`;\n    }\n    \n    markdown += `---\\n\\n`;\n  });\n}\n\n// Section métadonnées\nmarkdown += `## Métadonnées de la veille\\n\\n`;\nmarkdown += `- **Date de génération** : ${new Date().toISOString()}\\n`;\nmarkdown += `- **Articles scannés** : ${meta.total_analyses || 'N/A'}\\n`;\nmarkdown += `- **Articles retenus** : ${sorted.length}\\n`;\nmarkdown += `- **Taux de sélection** : ${meta.total_analyses ? Math.round((sorted.length / meta.total_analyses) * 100) : 'N/A'}%\\n\\n`;\n\nmarkdown += `---\\n\\n`;\nmarkdown += `*Veille automatisée générée par N8N + Tavily + Groq*\\n`;\n\nreturn [{\n  json: {\n    filename: filename,\n    markdown_content: markdown,\n    filepath: `/data/obsidian/00_Inbox veille/n8n/${filename}`,    stats: {\n      total_articles: sorted.length,\n      categories: Object.keys(categories)\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1808,
+        -16
+      ],
+      "id": "4465a9b0-f126-4ff7-bff4-183792c6f4e6",
+      "name": "Generate Markdown Obsidian"
+    },
+    {
+      "parameters": {
+        "jsCode": "const fs = require('fs');\nconst path = require('path');\n\nconst data = $input.first().json;\nconst filepath = data.filepath;\nconst content = data.markdown_content;\n\n// Créer le dossier si nécessaire\nconst dir = path.dirname(filepath);\nif (!fs.existsSync(dir)) {\n  fs.mkdirSync(dir, { recursive: true });\n}\n\n// Écrire le fichier\nfs.writeFileSync(filepath, content, 'utf8');\n\nconsole.log(`✅ Fichier créé : ${filepath}`);\n\nreturn [{\n  json: {\n    success: true,\n    filepath: filepath,\n    filename: data.filename,\n    message: `✅ Veille générée : ${data.filename}`\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        -16
+      ],
+      "id": "3c5356a8-f135-434d-b895-cd51777631c9",
+      "name": "Write to Obsidian"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Tavily - Projets IA",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Tavily - Recherche/ML",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Tavily - Analytics/Data",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Tavily - Veille Internationale",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tavily - Recherche/ML": {
+      "main": [
+        [
+          {
+            "node": "Merge Recherches",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Tavily - Projets IA": {
+      "main": [
+        [
+          {
+            "node": "Merge Recherches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tavily - Analytics/Data": {
+      "main": [
+        [
+          {
+            "node": "Merge Recherches",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Tavily - Veille Internationale": {
+      "main": [
+        [
+          {
+            "node": "Merge Recherches",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "Merge Recherches": {
+      "main": [
+        [
+          {
+            "node": "Déduplication",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Déduplication": {
+      "main": [
+        [
+          {
+            "node": "Prépare le Prompt LLM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Groq Request": {
+      "main": [
+        [
+          {
+            "node": "Groq Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Analysis": {
+      "main": [
+        [
+          {
+            "node": "Parse & Validate JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prépare le Prompt LLM": {
+      "main": [
+        [
+          {
+            "node": "Build Groq Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse & Validate JSON": {
+      "main": [
+        [
+          {
+            "node": "Generate Markdown Obsidian",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Markdown Obsidian": {
+      "main": [
+        [
+          {
+            "node": "Write to Obsidian",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "b8d02a9d-2fc1-43d7-80c7-678380c1a42c",
+  "meta": {
+    "instanceId": "988c68c2a3d3a5dd61f4b96e41c0ea1b5f8332bc1b62cdf73c2292e557cdf7fc"
+  },
+  "id": "Sm98WcnhhWKm2jk2",
+  "tags": []
+}
